@@ -32,19 +32,3 @@ stages:
               PathtoPublish: '$(Build.SourcesDirectory)/out'  # Path to build output
               ArtifactName: 'drop'
               publishLocation: 'Container'
-
-  - stage: Deploy
-    displayName: 'Deploy Stage'
-    dependsOn: Build
-    jobs:
-      - job: Deploy_Job
-        displayName: 'Deploy Job'
-        steps:
-          - download: current
-            artifact: drop
-            displayName: 'Download Build Artifacts'
-
-          - script: |
-              sudo rsync -avz --delete $(Pipeline.Workspace)/drop/ $(/var/www/react)/
-              sudo systemctl restart nginx
-            displayName: 'Deploy to NGINX and restart service'
