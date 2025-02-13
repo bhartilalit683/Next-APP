@@ -27,10 +27,9 @@ steps:
   - script: |
       npm run build
     displayName: 'Build Next.js app'
-
-  - script: |
-      echo "Deploying the app (if needed)"
-      # Your deployment commands here, like SCP to a remote server or other deployment methods
-    displayName: 'Deploy to production server'
+    
+  - publish: $(Build.ArtifactStagingDirectory)/.next
+    artifact: drop
+    displayName: 'Publish Build Artifact'
 
   # Optionally, add post-deployment steps like testing or validation
