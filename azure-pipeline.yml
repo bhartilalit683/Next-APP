@@ -1,23 +1,36 @@
 trigger:
   branches:
     include:
-      - main  # Trigger on changes to the main branch
+      - main  # Adjust this to match your branch name
 
 pool:
-  name: 'agentpool'  # Use the self-hosted agent pool or deployment group
+  name: 'agentpool' 
+  
+steps:
+  # Checkout the code from your repository
+  - task: Checkout@2
+    displayName: 'Checkout code'
 
-variables:
-  buildConfiguration: 'Release'
-  nginxDeployPath: '/var/www/html/react'  # NGINX deployment directory
+  # Install Node.js
+  - script: |
+      # Ensure Node.js is installed on the self-hosted agent
+      node -v
+      npm -v
+    displayName: 'Check Node.js and npm versions'
 
-stages:
-          - script: |
-              npm install
-              npm run build
-            displayName: 'Install dependencies and build'
+  # Install npm dependencies
+  - script: |
+      npm install
+    displayName: 'Install npm dependencies'
 
-          - task: PublishBuildArtifacts@1
-            inputs:
-              PathtoPublish: '$(Build.SourcesDirectory)/out'  # Path to build output
-              ArtifactName: 'drop'
-              publishLocation: 'Container'
+  # Build the Next.js application
+  - script: |
+      npm run build
+    displayName: 'Build Next.js app'
+
+  - script: |
+      echo "Deploying the app (if needed)"
+      # Your deployment commands here, like SCP to a remote server or other deployment methods
+    displayName: 'Deploy to production server'
+
+  # Optionally, add post-deployment steps like testing or validation
