@@ -11,17 +11,6 @@ variables:
   nginxDeployPath: '/var/www/html/react'  # NGINX deployment directory
 
 stages:
-  - stage: Build
-    displayName: 'Build Stage'
-    jobs:
-      - job: Build_Job
-        displayName: 'Build Job'
-        steps:
-          - task: UseNode@1
-            inputs:
-              version: '18.x'  # Specify Node.js version
-            displayName: 'Use Node.js'
-
           - script: |
               npm install
               npm run build
