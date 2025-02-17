@@ -1,35 +1,21 @@
 trigger:
-  branches:
-    include:
-      - main  # Adjust this to match your branch name
+- main
 
 pool:
-  name: 'agentpool' 
-  
+  name: 'agentpool'
+
 steps:
-  # Checkout the code from your repository
-  - task: Checkout@2
-    displayName: 'Checkout code'
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'
+  displayName: 'Install Node.js'
 
-  # Install Node.js
-  - script: |
-      # Ensure Node.js is installed on the self-hosted agent
-      node -v
-      npm -v
-    displayName: 'Check Node.js and npm versions'
-
-  # Install npm dependencies
-  - script: |
-      npm install
-    displayName: 'Install npm dependencies'
-
-  # Build the Next.js application
-  - script: |
-      npm run build
-    displayName: 'Build Next.js app'
-    
-  - publish: $(Build.ArtifactStagingDirectory)/.next
-    artifact: drop
-    displayName: 'Publish Build Artifact'
-
-  # Optionally, add post-deployment steps like testing or validation
+- script: |
+    npm install
+    npm run build
+  displayName: 'npm install and build'
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
