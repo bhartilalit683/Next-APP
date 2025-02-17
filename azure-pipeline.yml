@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  name: 'agentpool'
+  name: 'newline'
 
 steps:
 - task: NodeTool@0
