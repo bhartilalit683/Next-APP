@@ -1,36 +1,54 @@
-# This workflow will run tests using node and then publish a package to GitHub Packages when a release is created
-# For more information see: https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages
-
-name: Node.js Package
+name: Deploy Next.js Application
 
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm ci
-      - run: npm test
+  deploy:
+    runs-on: self-hosted
 
-  publish-gpr:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
         with:
-          node-version: 20
-          registry-url: https://npm.pkg.github.com/
-      - run: npm ci
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          node-version: '16'
+
+      - name: Install dependencies
+        run: |
+          npm install  # Install the dependencies
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SECRET_KEY }}
+
+      - name: Verify the app directory on the server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            # List the contents of the parent directory
+            ls -la /var/www/html
+          EOF
+      - name: Deploy to Server via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_IP }} << 'EOF'
+            # Check if the directory exists before trying to cd into it
+            if [ -d "/var/www/html/react-app" ]; then
+              echo "Directory exists, proceeding with deployment"
+              cd /var/www/html/react-app
+            else
+              echo "Directory does not exist, aborting deployment"
+              exit 1
+            fi
+            # Pull the latest changes
+            git pull origin main
+            # Install dependencies (if needed)
+            npm install
+            # Build the app for production
+            npm run build
+            # Restart the app using PM2
+            pm2 restart all || pm2 start npm --name "next-app" -- run start
+          EOF
